@@ -22,4 +22,4 @@ g <- ggcorrplot(cms, #hc.order = TRUE,
            lab = TRUE,
            digits = 1)
 
-ggsave(filename="./OUTtoShare/corrMatrix_Spring16.png", plot = g, width = 8, height=8)
+ggsave(filename="./OUT/corrMatrix_Spring16.png", plot = g, width = 8, height=8)
