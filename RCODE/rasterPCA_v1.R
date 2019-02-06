@@ -51,6 +51,8 @@ g <- ggplot(explVarDF, aes(y=explVar, x=pc)) +
 
 plot(g)
 
+ggsave("./OUTtoShare/propExplVar_1.png", g)
+
 # Cumulative proportion of explained variance
 #
 g1 <- ggplot(explVarDF, aes(y=csum, x=pc)) + 
@@ -60,5 +62,6 @@ g1 <- ggplot(explVarDF, aes(y=csum, x=pc)) +
 
 plot(g1)
 
+ggsave("./OUTtoShare/cumulPropExplVar_1.png", g)
 
 
