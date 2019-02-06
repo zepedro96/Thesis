@@ -1,6 +1,7 @@
 library(RStoolbox)
 library(raster)
 library(sf)
+library(ggplot2)
 
 #PCA Raster
 
@@ -30,4 +31,34 @@ RstPCA <- rasterPCA(rst,  nSamples = NULL, nComp = 10, spca = FALSE, maskCheck =
 summary(RstPCA$model)
 
 test_PCA <- ggRGB(RstPCA$map,1,2,3, stretch="lin", q=0)
+
+
+## Make a barplot with explained variance ---------------------------------------- ##
+
+eigs <- RstPCA$model$sdev^2
+expVar <- eigs / sum(eigs)
+explVarDF <- data.frame(pc = 1:length(expVar),
+                        sdev = RstPCA$model$sdev,
+                        csum = cumsum(eigs) / sum(eigs),
+                        explVar = expVar)
+
+# Proportion of variance explained per principal component
+#
+g <- ggplot(explVarDF, aes(y=explVar, x=pc)) + 
+  geom_bar(stat="identity") + 
+  xlab("Principal components") + 
+  ylab("Proportion of explained variance")
+
+plot(g)
+
+# Cumulative proportion of explained variance
+#
+g1 <- ggplot(explVarDF, aes(y=csum, x=pc)) + 
+  geom_bar(stat="identity") + 
+  xlab("Principal components") + 
+  ylab("Cumulative proportion of explained variance")
+
+plot(g1)
+
+
 
