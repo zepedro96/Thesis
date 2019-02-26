@@ -23,8 +23,10 @@ rst10m <- mask(rst10m, shapeAreaBuff)
 
 rst<- stack(rst10m, rst20m_resamp, ndvi)
 
-
-uc <- unsuperClass(rst,nClasses = 10)
+# Calibrate kmeans algorithm
+# nSamples - Integer. Number of random samples to draw to fit cluster map
+#
+uc <- unsuperClass(rst, nClasses = 10, nSamples = 1E5)
 
 map <- predict(uc, rst)
 
