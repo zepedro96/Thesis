@@ -13,16 +13,21 @@ shapeAreaBuff <- st_buffer(shapeArea, 2500)
 fl_10m <- list.files("D:/Thesis/DATA/Raster/SentinelS2A/SENTINEL2A_20160124-114205-331_L2A_T29TNG_D",
                      pattern="_SRE_", full.names = TRUE)[c(3,4,5,9)]
 
-rst20m_resamp <- raster("D:/Thesis/OUT/Winter15/resamp20_20160124.tif")
-
-ndvi <- raster("D:/Thesis/OUT/Winter15/NDVI_winter15_20160124.tif")
+fl_20m <- list.files("D:/Thesis/DATA/Raster/SentinelS2A/SENTINEL2A_20160124-114205-331_L2A_T29TNG_D",
+                     pattern="_SRE_", full.names = TRUE)[-c(3,4,5,9)]
 
 rst10m <- stack(fl_10m)
+rst20m <- stack(fl_20m)
+
 rst10m <- crop(rst10m, shapeAreaBuff)
 rst10m <- mask(rst10m, shapeAreaBuff)
 
-rst<- stack(rst10m, rst20m_resamp, ndvi)
+rst20m <- crop(rst20m, shapeAreaBuff)
+rst20m <- mask(rst20m, shapeAreaBuff)
 
+rst20m_resamp <- resample(rst20m, rst10m, method="ngb")
+
+rst<- stack(rst10m, rst20m_resamp)
 
 ggRGB(rst, 1,2,3)
 set.seed(112)
@@ -51,7 +56,7 @@ g <- ggplot(explVarDF, aes(y=explVar, x=pc)) +
 
 plot(g)
 
-ggsave("./OUTtoShare/propExplVar_1.png", g)
+ggsave("./OUTtoShare/propExplVar_winter15_20161116.png", g)
 
 # Cumulative proportion of explained variance
 #
@@ -62,6 +67,6 @@ g1 <- ggplot(explVarDF, aes(y=csum, x=pc)) +
 
 plot(g1)
 
-ggsave("./OUTtoShare/cumulPropExplVar_1.png", g)
+ggsave( "./OUTtoShare/cumulPropExplVar_winter15_20161116.png", g1)
 
 

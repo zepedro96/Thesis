@@ -13,22 +13,32 @@ shapeAreaBuff <- st_buffer(shapeArea, 2500)
 fl_10m <- list.files("D:/Thesis/DATA/Raster/SentinelS2A/SENTINEL2A_20161116-112335-459_L2A_T29TNG_D",
                      pattern="_SRE_", full.names = TRUE)[c(3,4,5,9)]
 
-rst20m_resamp <- raster("D:/Thesis/OUT/autumn16/resamp20_20161116.tif")
-
-ndvi <- raster("D:/Thesis/OUT/autumn16/NDVI_autumn16_20160801.tif")
+fl_20m <- list.files("D:/Thesis/DATA/Raster/SentinelS2A/SENTINEL2A_20161116-112335-459_L2A_T29TNG_D",
+                     pattern="_SRE_", full.names = TRUE)[-c(3,4,5,9)]
 
 rst10m <- stack(fl_10m)
+rst20m <- stack(fl_20m)
+
 rst10m <- crop(rst10m, shapeAreaBuff)
 rst10m <- mask(rst10m, shapeAreaBuff)
 
-rst<- stack(rst10m, rst20m_resamp, ndvi)
+rst20m <- crop(rst20m, shapeAreaBuff)
+rst20m <- mask(rst20m, shapeAreaBuff)
+
+rst20m_resamp <- resample(rst20m, rst10m, method="ngb")
+
+rst<- stack(rst10m, rst20m_resamp)
 
 # Calibrate kmeans algorithm
 # nSamples - Integer. Number of random samples to draw to fit cluster map
 #
-uc <- unsuperClass(rst, nClasses = 10, nSamples = 1E5)
+uc1 <- unsuperClass(rst, nClasses = 10, nSamples = 1E5)
 
-map <- predict(uc, rst)
+map1 <- predict(uc1, rst)
+
+uc2 <- unsuperClass(rst, nClasses = 20, nSamples = 1E5)
+
+map2 <- predict(uc2, rst)
 
 
 
