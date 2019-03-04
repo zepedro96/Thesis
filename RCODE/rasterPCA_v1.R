@@ -31,11 +31,13 @@ rst<- stack(rst10m, rst20m_resamp)
 
 ggRGB(rst, 1,2,3)
 set.seed(112)
-RstPCA <- rasterPCA(rst,  nSamples = NULL, nComp = 10, spca = FALSE, maskCheck = TRUE)
+RstPCA <- rasterPCA(rst,  nSamples = NULL, nComp = 10, spca = FALSE, maskCheck = TRUE,
+                    filename = "./OUT/PCA_S2a_Winter2015.tif")
 
 summary(RstPCA$model)
 
 test_PCA <- ggRGB(RstPCA$map,1,2,3, stretch="lin", q=0)
+
 
 
 ## Make a barplot with explained variance ---------------------------------------- ##
