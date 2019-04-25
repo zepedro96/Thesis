@@ -4,10 +4,11 @@ library(ggcorrplot)
 library(ggplot2)
 
 
-vezDF <- readRDS("./DATAtoShare/vezDF_GHC_merge.rds")
+vezDF <- read.csv("./DATA/dlt_burnt_kmeans_ndvi16.csv")
 
+vezDF <-vezDF[,-c(1)]
 
-selCols <- c(51:56,4,19,20,21,41:49)
+selCols <- c(42:48,4,19,20,21,40,41)
 #selColNames<- c("spRich")
 
 cmp <- round(cor(vezDF[,selCols]), 2)
@@ -22,4 +23,4 @@ g <- ggcorrplot(cms, #hc.order = TRUE,
            lab = TRUE,
            digits = 1)
 
-ggsave(filename="./OUT/corrMatrix_Spring16.png", plot = g, width = 8, height=8)
+ggsave(filename="./OUT/corrMatrix_k_ndvi16.png", plot = g, width = 8, height=8)
