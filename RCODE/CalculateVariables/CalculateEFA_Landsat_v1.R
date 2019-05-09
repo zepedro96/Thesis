@@ -1,7 +1,7 @@
 
 
 vi.dqt1<-function(x,...){ 
-  qts<-quantile(x,probs=c(0.05,0.95))
+  qts<-quantile(x,probs=c(0.1,0.90))
   return(qts[2]-qts[1])
 }
 
@@ -21,6 +21,7 @@ inds <- c(rep(1,9),rep(2:6,each=12),rep(7,4))
 
 EFA_min <- stackApply(NDVIts_smWhitt, indices = inds, fun = min)
 EFA_max <- stackApply(NDVIts_smWhitt, indices = inds, fun = max)
+EFA_dqt <- stackApply(NDVIts_smWhitt, indices = inds, fun = vi.dqt1)
 EFA_amp <- EFA_max - EFA_min
 EFA_med <- stackApply(NDVIts_smWhitt, indices = inds, fun = median)
 
@@ -36,7 +37,10 @@ EFA_wint <- stackApply(NDVIts_smWhitt, indices = inds, fun = vi.winter)
 writeRaster(EFA_min,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAmin.tif")
 writeRaster(EFA_max,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAmax.tif")
 writeRaster(EFA_med,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAmed.tif")
+
 writeRaster(EFA_amp,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAamp.tif")
+writeRaster(EFA_dqt,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAdqt.tif")
+
 writeRaster(EFA_sprg,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAsprg.tif")
 writeRaster(EFA_wint,"./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_2013-19_EFAwint.tif")
 

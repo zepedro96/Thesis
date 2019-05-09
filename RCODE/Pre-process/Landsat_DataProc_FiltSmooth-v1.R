@@ -12,7 +12,6 @@ library(ggplot2)
 
 
 # Load Rcpp functions
-#sourceCpp("D:/MyDocs/R-dev/PA_EcosystemStability/Cpp/HampelFilter.cpp")
 sourceCpp("./Cpp/setWeights.cpp")
 
 # Load R auxiliary functions
