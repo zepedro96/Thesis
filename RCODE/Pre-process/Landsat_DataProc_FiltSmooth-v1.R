@@ -9,7 +9,9 @@ library(ptw)
 library(pracma)
 library(magrittr)
 library(ggplot2)
-
+library(sf)
+library(dplyr)
+library(ggnewscale)
 
 # Load Rcpp functions
 sourceCpp("./Cpp/setWeights.cpp")
@@ -24,14 +26,15 @@ source("./RCODE/LIBS/Lib_SmoothFunctions.R")
 smoothTS_Hampel_Whittaker <- function(x, useHampelFilter=TRUE, HF.k=NULL, HF.t0=NULL, 
                                     lambda, useWt=TRUE, indices=NULL, quantProbs=NULL, quantWeights=NULL, 
                                     baseWeight=NULL, checkWts=TRUE, checkWin=3,na.rm=FALSE, impute.algo="ma",
-                                    k.imp=4){
+                                    k.imp=4, st, en, fr){
   
   if(all(is.na(x))){
     return(NA)  
   }else{
     
     if(any(is.na(x))){
-      suppressWarnings(x <- imputeTS::na.seadec(x, algorithm="ma", k=k.imp))
+      x.ts <- ts(data = x, start = st, end = en, frequency = fr)
+      suppressWarnings(x <- as.numeric(imputeTS::na.seadec(x.ts, algorithm="ma", k=k.imp)))
     }
     
     ## Use Hampel filter/identifier
@@ -64,91 +67,208 @@ tsSmooth.HWwt <- function(x, na.rm=TRUE){
   #HF.winType=1 
   lambda       = 5 
   useWt        = TRUE 
-  indices      = c(rep(1,9),rep(2:6,each=12),rep(7,4))
+  indices      = c(rep(1,10),rep(2:35,each=12),rep(36,4))
   quantProbs   = c(0.5, 0.75, 0.9)
-  quantWeights = c(2, 5, 10)
+  quantWeights = c(2, 4, 10)
   baseWeight   = 1 
   checkWts     = FALSE
   checkWin     = 3
   na.rm        = na.rm
+  st           = c(1984,3)
+  en           = c(2019,4)
+  fr           = 12
   
   return(smoothTS_Hampel_Whittaker(x, useHampelFilter, HF.k, HF.t0, #HF.winType, 
                                    lambda, useWt, indices, quantProbs, quantWeights, 
-                                   baseWeight, checkWts, checkWin, na.rm))
+                                   baseWeight, checkWts, checkWin, na.rm ,st=st,en=en,fr=fr))
+}
+
+tsSmooth.HWwt.LT7 <- function(x, na.rm=TRUE){
+  
+  useHampelFilter = TRUE 
+  HF.k  = 3 
+  HF.t0 = 3.5 
+  #HF.winType=1 
+  lambda       = 5 
+  useWt        = TRUE 
+  indices      = c(rep(1:6,each=12), rep(7,4))
+  quantProbs   = c(0.5, 0.75, 0.9)
+  quantWeights = c(2, 4, 10)
+  baseWeight   = 1 
+  checkWts     = FALSE
+  checkWin     = 3
+  na.rm        = na.rm
+  st           = c(2013,1)
+  en           = c(2019,4)
+  fr           = 12
+  
+  return(smoothTS_Hampel_Whittaker(x, useHampelFilter, HF.k, HF.t0, #HF.winType, 
+                                   lambda, useWt, indices, quantProbs, quantWeights, 
+                                   baseWeight, checkWts, checkWin, na.rm, st=st,en=en,fr=fr))
+}
+
+
+
+LTdates <- readxl::read_excel("./DATA/RASTER/Landsat/EVI-32day/EVI-32-day_ImageList-v1.xlsx")
+LT7_dates <- LTdates %>% filter(Satellite=="LE07", Year >= 2013)
+
+LT7 <- brick("./DATA/RASTER/Landsat/EVI-32day/LT7_EVI_Vez_Basin_1999-2019.tif" ,values=TRUE)
+LT7 <- LT7[[LT7_dates$ids]]
+names(LT7) <- paste("EVIts_", LT7_dates$DateCode, sep="")
+
+
+tsDates <- read.csv("./DATA/RASTER/Landsat/EVI-32day/FullImageList_1984-2019-LT-5-7-8_v2.csv")
+
+fl <- list.files("./DATA/RASTER/Landsat/EVI-32day/full",pattern=".tif$", full.names = TRUE)
+EVIts <- stack(fl)
+names(EVIts) <- paste("EVIts_",tsDates$DateCode,sep="")
+
+
+## ---------------------------------------------------------------------------------- ##
+## ---------------------------------------------------------------------------------- ##
+## ---------------------------------------------------------------------------------- ##
+
+
+#testPt <- matrix(c(544713, 4640881),1,2)  # Floresta carvalho? !Good!
+testPt <- matrix(c(553674, 4646172),1,2)   # Floresta carvalho/mista?
+
+pt1Data <- raster::extract(EVIts, testPt) %>% as.numeric
+pt1Data_LT7 <- raster::extract(LT7, testPt) %>% as.numeric
+
+ptdataTs <- ts(data = pt1Data, start = c(1984,3), end=c(2019,4), frequency = 12)
+ptdataTs_LT7 <- ts(data = pt1Data_LT7, start = c(2013,1), end=c(2019,4), frequency = 12)
+
+time(ptdataTs)
+time(ptdataTs_LT7)
+
+plot(ptdataTs, type = "l")
+plot(ptdataTs_LT7, type = "l")
+
+pt1DataImpute_ma <- imputeTS::na.seadec(ptdataTs, algorithm = "ma", k = 4)
+plot(pt1DataImpute_ma, type = "l")
+
+pt1DataImpute_ma_LT7 <- imputeTS::na.seadec(ptdataTs_LT7, algorithm = "ma", k = 4)
+plot(pt1DataImpute_ma_LT7, type = "l")
+
+
+smWhit     <- tsSmooth.HWwt(pt1Data)
+smWhit_LT7 <- tsSmooth.HWwt.LT7(pt1Data_LT7)
+
+
+LT_DF <- data.frame( EVI    = pt1Data, 
+                     EVI_   = pt1DataImpute_ma, 
+                     smType = "Whittaker",
+                     EVI_sm = smWhit, 
+                     dates  = as.Date(tsDates$ImgDate), 
+                     sat    = tsDates$Satellite)
+
+
+
+LT7_DF <- data.frame(EVI    = pt1Data_LT7, 
+                     EVI_   = pt1DataImpute_ma_LT7, 
+                     smType = "Whittaker",
+                     EVI_sm = smWhit_LT7, 
+                     dates  = as.Date(LT7_dates$ImgDate), 
+                     sat    = LT7_dates$Satellite)
+
+
+vals <-  c("Composite series LT 5,7,8 (sm.)" = "red",
+          "Landsat 7 ETM+ (sm.)" = "black")
+vals1 <- c("LT05" = "blue",
+          "LE07" = "orange",
+          "LC08" = "dark green")
+
+
+g <- ggplot(LT_DF)+
+  geom_line(aes(x = dates, y = EVI_),linetype="dashed", size=0.5, color="black") +
+  geom_point(aes(x = dates, y = EVI_, shape = sat, color=sat), size=2) +
+   
+  #new_scale_color() +
+  #scale_colour_manual(name = "sat", values=vals1 )
+  geom_line(aes(x = dates, y = EVI_sm, color="Composite series LT 5,7,8 (sm.)"), size=1.25) + 
+  geom_line(data=LT7_DF, mapping=aes(x = dates, y = EVI_sm, color="LE07"), size=1.25) +
+  #scale_colour_manual(name = "Smoothed series:", values=vals)
+  scale_color_brewer(palette = "Set1", name="Data source:") +
+  scale_shape(name="") +
+  theme_bw() + 
+  theme(legend.position="bottom") + 
+  ylab("EVI (Enhanced Vegetation Index)") + 
+  xlab("Time/Year")
+
+plot(g)
+
+
+## ---------------------------------------------------------------------------------- ##
+## ---------------------------------------------------------------------------------- ##
+## ---------------------------------------------------------------------------------- ##
+
+
+
+testPoints <- read_sf("./DATAtoShare/class.shp") %>% select(Name) %>% st_zm %>% 
+  st_transform(crs=c("+proj=utm +zone=29 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+ard <- read_sf("./DATAtoShare/area ardida.shp") %>% select(Name) %>% st_zm %>%
+  st_transform(crs=c("+proj=utm +zone=29 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+
+pts <- (rbind(testPoints,ard))
+pts_DF <- `st_geometry<-`(pts, NULL)
+
+
+
+for(i in 1:nrow(pts)){
+  
+  
+  ptType <- pts_DF[i,"Name",drop=TRUE]
+  
+  pt1Data     <- raster::extract(EVIts, pts[i,]) %>% as.numeric
+  pt1Data_LT7 <- raster::extract(LT7, pts[i,]) %>% as.numeric
+  
+  ptdataTs             <- ts(data = pt1Data, start = c(1984,3), end=c(2019,4), frequency = 12)
+  ptdataTs_LT7         <- ts(data = pt1Data_LT7, start = c(2013,1), end=c(2019,4), frequency = 12)
+  pt1DataImpute_ma     <- imputeTS::na.seadec(ptdataTs, algorithm = "ma", k = 4)
+  pt1DataImpute_ma_LT7 <- imputeTS::na.seadec(ptdataTs_LT7, algorithm = "ma", k = 4)
+  
+  
+  smWhit     <- tsSmooth.HWwt(pt1Data)
+  smWhit_LT7 <- tsSmooth.HWwt.LT7(pt1Data_LT7)
+  
+  
+  LT_DF <- data.frame( EVI    = pt1Data, 
+                       EVI_   = pt1DataImpute_ma, 
+                       smType = "Whittaker",
+                       EVI_sm = smWhit, 
+                       dates  = as.Date(tsDates$ImgDate), 
+                       sat    = tsDates$Satellite)
+  
+  LT7_DF <- data.frame(EVI    = pt1Data_LT7, 
+                       EVI_   = pt1DataImpute_ma_LT7, 
+                       smType = "Whittaker",
+                       EVI_sm = smWhit_LT7, 
+                       dates  = as.Date(LT7_dates$ImgDate), 
+                       sat    = LT7_dates$Satellite)
+  
+  g <- ggplot(LT_DF)+
+    geom_line(aes(x = dates, y = EVI_),linetype="dashed", size=0.5, color="black") +
+    geom_point(aes(x = dates, y = EVI_, shape = sat, color=sat), size=2) +
+    geom_line(aes(x = dates, y = EVI_sm, color="Composite series LT 5,7,8\n(Whittaker smooth)"), size=1.25) + 
+    geom_line(data=LT7_DF, mapping=aes(x = dates, y = EVI_sm, color="LE07"), size=1.25) +
+    scale_color_brewer(palette = "Set1", name="Data source:") +
+    scale_shape(name="") +
+    theme_bw() + 
+    theme(legend.position="bottom") + 
+    ylab("EVI (Enhanced Vegetation Index)") + 
+    xlab("Time/Year") + 
+    labs(title = "EVI 32-day composite time series for Landsat 5,7,8 (1984 - 2019)",
+         subtitle = paste("LULC type:",ptType,"| Index nr.:",i))
+  
+  #plot(g)
+  
+  ggplot2::ggsave(plot=g, filename=paste("./OUTtoShare/tsPlots/LT_ts/EVI_32day_LTcompositeTS_[",i,"]_",ptType,".png",sep=""),
+                  width = 14, height = 8)
+  
+  cat("\n---> Finished point",i,"out of",nrow(pts),"\n\n")
   
 }
 
 
-NDVIts <- stack("./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_Vez_Basin_2013-2019.tif")
 
 
-NDVIts_smWhitt <- calc(NDVIts, fun = tsSmooth.HWwt)
-
-writeRaster(NDVIts_smWhitt,filename = "./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_Vez_Basin_2013_2019_smWhitt.tif")
-
-
-ptDataOriginal <- raster::extract(NDVIts, testPt) %>% as.numeric
-ptDataSmooth <- raster::extract(NDVIts_smWhitt, testPt) %>% as.numeric
-
-
-
-
-# ## ------------------------------------------------------------------------ ##
-# 
-# tsDates <- #rbind(
-#   #readxl::read_excel("./DATA/RASTER/Landsat/NDVI-32day/Landsat_5-8_NDVI-32Day_imageDates.xlsx", 1),
-#   readxl::read_excel("./DATA/RASTER/Landsat/NDVI-32day/Landsat_5-8_NDVI-32Day_imageDates.xlsx", 2)#)
-# 
-# NDVIts <- stack(#c("./DATA/RASTER/Landsat/NDVI-32day/LT5_NDVI_Vez_Basin_1990-2012.tif",
-#                   "./DATA/RASTER/Landsat/NDVI-32day/LT8_NDVI_Vez_Basin_2013-2019.tif")
-# names(NDVIts) <- paste("NDVI_",tsDates$DateCode,sep="")
-# 
-# 
-# #testPt <- matrix(c(544713, 4640881),1,2)  # Floresta carvalho? !Good!
-# testPt <- matrix(c(553674, 4646172),1,2)   # Floresta carvalho/mista?
-# pt1Data <- raster::extract(NDVIts, testPt) %>% as.numeric
-# 
-# #pt1DataSmWhitt <- raster::extract(NDVIts_smWhitt, testPt) %>% as.numeric
-# 
-# pt1DataImpute <- imputeTS::na.seadec(pt1Data, algorithm="ma", k=4)
-# 
-# # qt <- quantile(pt1DataImpute, 0.75)
-# # w <- rep(1, length(pt1Data))
-# # w[pt1DataImpute > qt] <- 5
-# # smWhit <- whit2(pt1DataImpute, lambda=4, w = w)
-# 
-# yrs <- tsDates$Year
-# names(yrs) <- tsDates$Year
-# yr <- sort(unique(yrs))
-# yr_ <- 1:length(yr)
-# names(yr_) <- yr
-# inds <- yr_[yrs]
-# 
-# 
-# 
-# smWhit <- 
-#   smoothTS_Hampel_Whittaker(pt1DataImpute, useHampelFilter=TRUE, HF.k=3, HF.t0=3, 
-#                             lambda=5, useWt=TRUE, indices=inds, quantProbs=c(0.05, 0.5, 0.75, 0.9), 
-#                             quantWeights=c(0.1, 1, 2, 10), 
-#                             baseWeight=1, checkWts=FALSE, checkWin=3,na.rm=FALSE)
-# 
-# smSavGol <- savgol(pt1DataImpute, fl = 9, forder = 2)
-# 
-# testDF <- rbind(data.frame(ndvi=pt1Data, ndvi_ = pt1DataImpute, smType = "Whittaker", 
-#                            ndvi_sm = smWhit, dates=as.Date(tsDates$ImgDate))
-#                 # 
-#                 # data.frame(ndvi=pt1Data, ndvi_ = pt1DataImpute, smType = "Savitzky-Golay", 
-#                 #            ndvi_sm = smSavGol, dates=as.Date(tsDates$ImgDate))
-#                 
-#                 )
-# 
-# g <- ggplot(testDF)+
-#   geom_line(aes(x = dates, y=ndvi_),linetype="dashed") + 
-#   geom_point(aes(x = dates, y=ndvi_), size=3, color="red") + 
-#   geom_line(aes(x = dates, y = ndvi_sm, color=smType), size=1.25) 
-#   # scale_color_manual(name="Smoothing\nalgorithm:",
-#   #                    values=c("Savitzky-Golay"="blue", "Whittaker"="dark green"))
-# 
-# plot(g)
-# 
-# 
