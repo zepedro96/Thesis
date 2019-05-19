@@ -1,7 +1,7 @@
 
 library(dplyr)
 
-birdDF <- read.csv("C:/Users/JG/Desktop/birdData_GBIF/dados_gbif_vez_v2.txt")
+birdDF <- read.csv("C:/Users/JG/Desktop/birdData_GBIF/dados_gbif_vez_v3.txt")
 
 countDistinct <- function(x) length(na.omit(unique(x))) 
 
@@ -17,6 +17,7 @@ nr  <- vector(mode="numeric",length=nrow(vals))
 for(i in 1:nrow(vals)){
   
   DF <- try(birdDF %>% 
+    filter(year >= 2000) %>% 
     group_by(ID_PSU) %>% 
     summarize(SpRich = countDistinct(species), npts=n()) %>% 
     filter(npts >= vals[i,1], npts <= vals[i,2])) 
@@ -24,7 +25,7 @@ for(i in 1:nrow(vals)){
     if(nrow(DF) >= 10){
     
       corVal<- DF %>% 
-        cor %>% round(2) %>% `[`(3,2)
+        cor(method="spearman") %>% round(2) %>% `[`(3,2)
       corVal<-ifelse(inherits(corVal,"try-error"),NA,corVal)
       res[i]<-corVal
       nr[i]<-nrow(DF)
@@ -32,14 +33,15 @@ for(i in 1:nrow(vals)){
 }
 
 data.frame(corVal=res, nr=nr, vals) %>% 
-  arrange(desc(nr)) %>% 
-  filter(corVal>0, corVal<0.5)
+  arrange(desc(corVal)) %>% 
+  filter(corVal>0, corVal < 0.2)
   
 DF <- try(birdDF %>% 
+            filter(year >= 2000) %>%
             group_by(ID_PSU) %>% 
             summarize(SpRich = countDistinct(species), npts=n()) %>% 
-            filter(npts >= 20, npts <= 37)) %>% 
-            arrange(desc(SpRich))
+            filter(npts >= 23, npts <= 38) %>% 
+            arrange(desc(SpRich)))
 
-write.csv(DF, "C:/Users/JG/Desktop/birdData_GBIF/gbif_data_sprich_v2.csv", row.names = FALSE)
+write.csv(DF, "C:/Users/JG/Desktop/birdData_GBIF/gbif_data_sprich_v3.csv", row.names = FALSE)
 

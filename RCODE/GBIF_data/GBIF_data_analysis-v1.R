@@ -35,13 +35,15 @@ names(rst) <- c("EFAamp","EFAmin","EFAmax","EFAavg","EFAstd",
                 "EFAmed","EFAcv","EFAsprg","EFAwint","ESPI")
 
 
-grid1kmall <- read_sf("D:/MyDocs/GeoData/ByProject/IND_CHANGE/SampDesign/SampDesignVEZ_0_INDCHANGE_v1/SampGridVez_1km_Vez_All_v1.shp") 
+#grid1kmall <- read_sf("D:/MyDocs/GeoData/ByProject/IND_CHANGE/SampDesign/SampDesignVEZ_0_INDCHANGE_v1/SampGridVez_1km_Vez_All_v1.shp") 
+grid1kmall <- read_sf("C:/Users/JG/Desktop/birdData_GBIF/Grid1km_Vez_GBIFdata_v1.shp")
 
 gridSub1km <- grid1kmall %>% 
   filter(ID_PSU %in% DF$ID_PSU)
 
 birdGridRst1km <- fasterize::fasterize(gridSub1km, rst[[1]], field = "ID_PSU")
 
+plot(birdGridRst1km)
 
 rstDF1km <- na.omit(values(stack(birdGridRst1km, rst))) %>% 
   as.data.frame %>% 
@@ -59,4 +61,9 @@ data.frame(cn=colnames(cm)[-c(1:2)],
            corVal=cm[-c(1:2),1,drop=FALSE]) %>% arrange(desc(abs(SpRich)))
 
 
-plot(vezDF_vars1km$ESPI_std, vezDF_vars1km$SpRich)
+plot(vezDF_vars1km$EFAcv_avg, vezDF_vars1km$SpRich)
+
+cor.test(vezDF_vars1km$EFAavg_std, vezDF_vars1km$SpRich, method="pearson")
+
+
+
