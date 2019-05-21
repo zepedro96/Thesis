@@ -179,6 +179,25 @@ cor(x=vezDF_vars[,"RIQ"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
 cor(x=vezDF_vars[,"NAT"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
 cor(x=vezDF_vars[,"END"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
 
+
+cor.test(vezDF_vars1km$SpRich.ObsField, vezDF_vars1km$ESPI_std, method="pearson")
+cor.test(vezDF_vars1km$SpRich.ObsField, vezDF_vars1km$ESPI_std, method="spearman")
+
+
+mod1 <- glm(SpRich.ObsField ~ EFAsprg_avg + EFAmin_std + ESPI_std, data=vezDF_vars1km, 
+            family=poisson())
+summary(mod1)
+
+mod1 <- mgcv::gam(SpRich.ObsField ~ s(EFAsprg_avg,k=2) + s(ESPI_std,k=2) + s(EFAamp_std,k=2), data=vezDF_vars1km, 
+            family=poisson())
+summary(mod1)
+
+cor(predict(mod1),vezDF_vars1km$SpRich.ObsField, method="spearman")
+
+## ------------------------------------------------------------------------- ##
+
+
+
 g1 <- ggplot(vezDF_vars, aes(x=EFAamp_std, y=spRich)) + 
   geom_point() + 
   geom_smooth(method="lm")
