@@ -124,6 +124,30 @@ EVIts <- stack(fl)
 names(EVIts) <- paste("EVIts_",tsDates$DateCode,sep="")
 
 
+EVIts_whitsm <- calc(EVIts, fun = tsSmooth.HWwt)
+
+# Write data to individual TIFF files
+wdir <- "./DATA/RASTER/Landsat/EVI-32day/smoothed/"
+N <- nlayers(EVIts_whitsm)
+pb <- txtProgressBar(1,N,style = 3)
+
+for(i in 1:N){
+  
+  dateCode <- DT_all$DateCode[i]
+  satCode <- DT_all$Satellite[i]
+  
+  outFileName <- paste(wdir, "EVI_T1_32day_WhitSmooth_",dateCode,"_",satCode,"-v1.tif",sep="")
+  
+  if(!file.exists(outFileName)){
+    cat("\n-> Writing file:",outFileName,"\n\n")
+    writeRaster(EVIts_whitsm[[i]],outFileName)
+  }else{
+    cat("\n-> Skipping file!!\n\n")
+  }
+  setTxtProgressBar(pb, i)
+}
+
+
 ## ---------------------------------------------------------------------------------- ##
 ## ---------------------------------------------------------------------------------- ##
 ## ---------------------------------------------------------------------------------- ##
