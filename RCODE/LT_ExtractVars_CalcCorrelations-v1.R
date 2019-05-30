@@ -6,7 +6,16 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(RStoolbox)
+library(psych)
 
+
+divEvFun <- function(x){
+  as.data.frame(
+    c(evenness(as.numeric(table(x)), index = "all", zeroes = FALSE, detection = 0)[1,,drop=TRUE],
+      diversity(as.numeric(table(x)), index = c("shannon","inverse_simpson","gini_simpson"), zeroes = FALSE)[1,,drop=TRUE],
+      eft_count=length(unique(x)))
+  )
+}
 
 shannon <- function (x, na.rm=TRUE){
   x <- na.omit(x)
@@ -21,7 +30,6 @@ shannon <- function (x, na.rm=TRUE){
   }
 }
 
-
 countDistinct <- function(x){
   x <- na.omit(x)
   if(length(x)==0){
@@ -30,7 +38,6 @@ countDistinct <- function(x){
     return(length(unique(x))) 
   }
 } 
-
 
 makePivotTableRelFreq <- function(x,ID_field,Data_field){
   
@@ -46,48 +53,48 @@ makePivotTableRelFreq <- function(x,ID_field,Data_field){
   return(out)
 }
 
+getVarNames <- function(x) gsub(".tif","",unlist(lapply(strsplit(fpaths,"_"),function(x) x[length(x)])))
 
 
 birdsgrid <- read_sf("D:/MyDocs/Dropbox/MasterThesisJoséSilva/DATA/FieldData/Birds/Grids/Grid200mEffectSampSSU_WGS84UTM29N_VEZ_v1.shp")
-#birdsgrid <- read_sf("./DATA/FieldData/Birds/Grids/Grid200mEffectSampSSU_WGS84UTM29N_VEZ_v1.shp")
-grid1km <- read_sf("D:/MyDocs/GeoData/ByProject/IND_CHANGE/FieldWorkData/CommonBirds_FieldData_MainTable/Grids/Grid1kmEffectSampPSU_WGS84UTM29N_VEZ_v1.shp")
+grid1km   <- read_sf("D:/MyDocs/GeoData/ByProject/IND_CHANGE/FieldWorkData/CommonBirds_FieldData_MainTable/Grids/Grid1kmEffectSampPSU_WGS84UTM29N_VEZ_v1.shp")
 
+fpaths <- list.files("./DATA/RASTER/Landsat/EVI-32day/metrics/jul-jun", pattern=".tif$", full.names = TRUE)[-c(13:14)]
 
-fpaths <- 
-paste("./DATA/RASTER/Landsat/NDVI-32day/",
-c("LT8_NDVI_2013-19_EFAamp.tif",
-  "LT8_NDVI_2013-19_EFAmin.tif",
-  "LT8_NDVI_2013-19_EFAmax.tif",
-  "LT8_NDVI_2013-19_EFAavg.tif",
-  "LT8_NDVI_2013-19_EFAstd.tif",
-  "LT8_NDVI_2013-19_EFAmed.tif",
-  "LT8_NDVI_2013-19_EFAcv.tif",
-  "LT8_NDVI_2013-19_EFAsprg.tif",
-  "LT8_NDVI_2013-19_EFAwint.tif",
-  "LT8_NDVI_2013-19_ESPI.tif"
-  ),sep=""
-)
+vnames <- getVarNames(fpaths)
 
 for(i in 1:length(fpaths)){
   
   print(i)
-  tmp <- stack(fpaths[[i]])[[2]]
+  tmp <- stack(fpaths[[i]])[[31]] # yr=31 -> 2014
   if(i==1)
     rst <- stack(tmp)
   else
     rst <- stack(rst, tmp)
 }
 
-names(rst) <- c("EFAamp","EFAmin","EFAmax","EFAavg","EFAstd",
-                "EFAmed","EFAcv","EFAsprg","EFAwint","ESPI")
+names(rst) <- vnames
 
 # 
-# uc2 <- unsuperClass(rst[[c("EFAmin","EFAmax","EFAavg","EFAstd")]], 
-#                     nClasses = 20, nSamples = 5E5)
+# rstDF <- values(rst) %>% na.omit
 # 
-# map2 <- predict(uc2, rst, "./DATA/RASTER/Landsat/NDVI-32day/LT_km20c_NDVI_EFA.tif", overwrite=TRUE)
+# corMarPears <- cor(rstDF) %>% round(2)
+# corMarSpear <- cor(rstDF,method="spearman") %>% round(2)
+# 
+# rstTemp <- rst[[c("EFAavg","EFAamp")]]
+# 
+# rstDF <- values(rstTemp)
+# 
+# uc2 <- unsuperClass(rstTemp, nClasses = 20, nSamples = 2.5E5)
+# 
+# map2 <- predict(uc2, rst, "./DATA/RASTER/Landsat/EVI-32day/metrics/clust/LT_km20clust_EVI_jan-dec_EFA.tif", overwrite=TRUE)
+#
+#map2 <- raster("./DATA/RASTER/Landsat/EVI-32day/metrics/clust/LT_km20clust_EVI_jan-dec_EFA.tif")
 
-map2 <- raster("./DATA/RASTER/Landsat/NDVI-32day/LT_km20c_NDVI_EFA.tif")
+map2 <- raster("./DATA/RASTER/Landsat/EVI-32day/metrics/jul-jun/LT578comp_EVI_1984_2019_jul-jun_EFTcomnbs01.tif")
+
+
+plot(map2)
 
 ## ------------------------------------------------------------------------------------- ##
 
@@ -107,7 +114,11 @@ rstDF_km20c <- na.omit(values(stack(birdGridRst, map2))) %>%
   as.data.frame %>% 
   rename("ID_SSU" = "layer") %>% 
   group_by(ID_SSU) %>% 
-  summarize_all(.funs=list(shn20c = shannon, nclass20c = countDistinct))
+  #summarize_all(.funs=list(shn20c = shannon, nclass20c = countDistinct))
+  do(divEvFun(.[[2]])) %>% 
+  ungroup %>% 
+  select(-1) %>% 
+  cor %>% round(2)
 
 
 DFkm20c <- na.omit(values(stack(birdGridRst, map2))) %>% 
@@ -131,7 +142,8 @@ rstDF_km20c_1km <- na.omit(values(stack(birdGridRst1km, map2))) %>%
   as.data.frame %>% 
   rename("ID_PSU" = "layer") %>% 
   group_by(ID_PSU) %>% 
-  summarize_all(.funs=list(shn20c = shannon, nclass20c = countDistinct))
+  #summarize_all(.funs=list(shn20c = shannon, nclass20c = countDistinct))
+  do(divEvFun(.[[2]]))
 
 DFkm20c_1km <- na.omit(values(stack(birdGridRst1km, map2))) %>% 
   as.data.frame %>% 
@@ -161,10 +173,15 @@ cmSpear <- cor(vezDF_vars[,-c(1:3)], method="spearman") %>% round(2)
 cmPears_1km <- cor(vezDF_vars1km[,-1]) %>% round(2)
 cmSpear_1km <- cor(vezDF_vars1km[,-1], method="spearman") %>% round(2)
 
-write.csv(cmPears, "./OUT/cmPears_LT-vars-v1.csv")
-write.csv(cmSpear, "./OUT/cmSpear_LT-vars-v1.csv")
-write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-v1.csv")
-write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-v1.csv")
+
+
+
+write.csv(cmPears, "./OUT/cmPears_LT-vars-jul-jun-v4.csv")
+write.csv(cmSpear, "./OUT/cmSpear_LT-vars-jul-jun-v4.csv")
+write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-jul-jun-v4.csv")
+write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-jul-jun-v4.csv")
+
+
 
 cor(x=vezDF_vars[,"spRich"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
 cor(x=vezDF_vars[,"Feeding.I"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
