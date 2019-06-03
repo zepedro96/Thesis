@@ -55,6 +55,41 @@ write_sf(gridBirds, "./OUT/shn_wint15.shp")
 
 hist(rstDFsummary$wint15_km10c_shn)
 
+#kmeans 5c and 15c
+
+birdsgrid <- read_sf("D:/Dropbox/MasterThesisJoséSilva/DATA/FieldData/Birds/Grids/Grid200mEffectSampSSU_WGS84UTM29N_VEZ_v1.shp")
+
+length(unique(birdsgrid$ID_SSU))
+
+
+rst <- stack(c("./DataToShare/kmeans_NDVI_5c_v2.tif", 
+               "./DataToShare/kmeans_NDVI_15c_v2.tif"))
+
+names(rst) <- c("NDVI_km5c","NDVI_km15c")
+
+birdGridRst <- fasterize(birdsgrid,rst[[1]],field = "ID_SSU")
+
+rstDF <- na.omit(values(stack(birdGridRst, rst)))
+
+head(rstDF)
+
+rstDFsummary <- rstDF %>% 
+  as.data.frame() %>% 
+  group_by(layer) %>% 
+  summarise_all(.funs = list(shn=shannon), na.rm=TRUE) 
+#mutate(ID_SSU = layer)
+
+colnames(rstDFsummary)[1] <- "ID_SSU"
+
+write.csv(rstDFsummary, "NDVI_shn_v2.csv",row.names = FALSE)
+
+
+
+gridBirds <- birdsgrid %>% left_join(rstDFsummary, by = "ID_SSU")
+
+plot(gridBirds)
+
+write_sf(gridBirds, "./OUT/shn_NDVI_v2.shp")
 
 
 # 

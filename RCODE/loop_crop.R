@@ -3,14 +3,14 @@
 library(raster)
 library(sf)
 
-shapeArea <- read_sf("./DATA/VECTOR/Bounds/VezBasinCOS12_WGS84_29N.shp")
+shapeArea <- read_sf("./DATA/Vector/VezBasinCOS12_WGS84_29N.shp")
 
 shapeAreaBuff <- st_buffer(shapeArea, 2500)
 
 
 #files <- list.files(path="DATA/Raster/SentinelS2A",  full.names=TRUE, recursive=FALSE)
 
-fileList <- list.files(path="DATA/RASTER/S2_L2A",  full.names=TRUE, recursive=FALSE)
+fileList <- list.files(path="DATA/Raster/SentinelS2A",  full.names=TRUE, recursive=FALSE)
 
 for(fname in fileList){
   
@@ -40,8 +40,8 @@ for(fname in fileList){
   ##
   # The output folder needs to be changed??! |||| <----------------------
   # Change this: "./DATA/RASTER/S2_L2A_CropResamp/"
-  fnameOut <- paste("./DATA/RASTER/S2_L2A_CropResamp/",basename(fname),"_crop_r10m.tif",sep="")
-  fnameNDVI <- paste("./DATA/RASTER/S2_L2A_CropResamp/",basename(fname),"_NDVI_crop_r10m.tif",sep="")
+  fnameOut <- paste("./DATA/Raster/S2A_crop/",basename(fname),"_crop_r10m.tif",sep="")
+  fnameNDVI <- paste("./DATA/Raster/S2A_crop/",basename(fname),"_NDVI_crop_r10m.tif",sep="")
   
   # Write full sentinel multiband image
   writeRaster(rst, fnameOut, overwrite=FALSE)

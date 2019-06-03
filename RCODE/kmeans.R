@@ -44,13 +44,25 @@ rst<- stack(fl)
 # Calibrate kmeans algorithm
 # nSamples - Integer. Number of random samples to draw to fit cluster map
 #
-uc1 <- unsuperClass(rst, nClasses = 10, nSamples = 1E6)
+uc1 <- unsuperClass(rst, nClasses = 5, nSamples = 1E6)
 
-map1 <- predict(uc1, rst, "./DataToShare/kmeans_NDVI_10c_v2.tif")
+map1 <- predict(uc1, rst, "./DataToShare/kmeans_NDVI_5c_v2.tif")
 
-uc2 <- unsuperClass(rst, nClasses = 20, nSamples = 1E6)
+uc2 <- unsuperClass(rst, nClasses = 15, nSamples = 1E6)
 
-map2 <- predict(uc2, rst, "./DataToShare/kmeans_NDVI_20c_v2.tif")
+map2 <- predict(uc2, rst, "./DataToShare/kmeans_NDVI_15c_v2.tif")
 
+
+#Test for Summer16
+
+rst <- stack("./DATA/Raster/S2A_crop/SENTINEL2A_20160801-113323-464_L2A_T29TNG_D_crop_r10m.tif")
+
+uc1 <- unsuperClass(rst, nClasses = 5, nSamples = 1E6)
+
+map1 <- predict(uc1, rst, "./DataToShare/kmeans_SU16_5c.tif")
+
+uc2 <- unsuperClass(rst, nClasses = 15, nSamples = 1E6)
+
+map2 <- predict(uc2, rst, "./DataToShare/kmeans_SU16_15c.tif")
 
 
