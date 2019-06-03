@@ -75,23 +75,9 @@ for(i in 1:length(fpaths)){
 
 names(rst) <- vnames
 
-# 
-# rstDF <- values(rst) %>% na.omit
-# 
-# corMarPears <- cor(rstDF) %>% round(2)
-# corMarSpear <- cor(rstDF,method="spearman") %>% round(2)
-# 
-# rstTemp <- rst[[c("EFAavg","EFAamp")]]
-# 
-# rstDF <- values(rstTemp)
-# 
-# uc2 <- unsuperClass(rstTemp, nClasses = 20, nSamples = 2.5E5)
-# 
-# map2 <- predict(uc2, rst, "./DATA/RASTER/Landsat/EVI-32day/metrics/clust/LT_km20clust_EVI_jan-dec_EFA.tif", overwrite=TRUE)
-#
-#map2 <- raster("./DATA/RASTER/Landsat/EVI-32day/metrics/clust/LT_km20clust_EVI_jan-dec_EFA.tif")
-
+# EFT map / discrete combination of EFA
 map2 <- raster("./DATA/RASTER/Landsat/EVI-32day/metrics/jul-jun/LT578comp_EVI_1984_2019_jul-jun_EFTcomnbs01.tif")
+
 
 
 plot(map2)
@@ -182,35 +168,6 @@ write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-jul-jun-v4.csv")
 write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-jul-jun-v4.csv")
 
 
-
-cor(x=vezDF_vars[,"spRich"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"Feeding.I"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"Feeding.G"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"Feeding.O"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-
-cor(x=vezDF_vars[,"Foraging.O"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"Foraging.S"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"Foraging.W"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-
-cor(x=vezDF_vars[,"RIQ"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"NAT"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-cor(x=vezDF_vars[,"END"], y=vezDF_vars[,57:78]) %>% t %>% as.data.frame
-
-
-cor.test(vezDF_vars1km$SpRich.ObsField, vezDF_vars1km$ESPI_std, method="pearson")
-cor.test(vezDF_vars1km$SpRich.ObsField, vezDF_vars1km$ESPI_std, method="spearman")
-
-
-mod1 <- glm(SpRich.ObsField ~ EFAsprg_avg + EFAmin_std + ESPI_std, data=vezDF_vars1km, 
-            family=poisson())
-summary(mod1)
-
-mod1 <- mgcv::gam(SpRich.ObsField ~ s(EFAsprg_avg,k=2) + s(ESPI_std,k=2) + s(EFAamp_std,k=2), data=vezDF_vars1km, 
-            family=poisson())
-summary(mod1)
-
-cor(predict(mod1),vezDF_vars1km$SpRich.ObsField, method="spearman")
-
 ## ------------------------------------------------------------------------- ##
 
 
@@ -231,22 +188,6 @@ plot(g2)
 
 
 ## ------------------------------------------------------------------------- ##
-
-cm1km <- cor(vezDF_vars1km[,-1], method="pearson") %>% round(2)
-
-i=3; cm1km[i,-c(1:14)]; rownames(cm1km)[i]
-
-
-cm1km[1:14,-c(1:14)]
-
-
-g2 <- ggplot(vezDF_vars1km, aes(x=ESPI_std, y=SpRich.ObsField)) + 
-  geom_point() + 
-  #geom_smooth(method="lm") + 
- geom_quantile(quantiles=c(0.1,0.5,0.9))
-
-plot(g2)
-
 
 
 
