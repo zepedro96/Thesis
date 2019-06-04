@@ -8,12 +8,13 @@ library(tidyr)
 library(ggplot2)
 library(RStoolbox)
 library(psych)
+library(microbiome)
 
 divEvFun <- function(x){
   as.data.frame(
     c(evenness(as.numeric(table(x)), index = "all", zeroes = FALSE, detection = 0)[1,,drop=TRUE],
       diversity(as.numeric(table(x)), index = c("shannon","inverse_simpson","gini_simpson"), zeroes = FALSE)[1,,drop=TRUE],
-      eft_count=length(unique(x)))
+      eft_count = length(unique(x)))
   )
 }
 
