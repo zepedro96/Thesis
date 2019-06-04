@@ -1,5 +1,6 @@
 
 library(raster)
+library(readxl)
 library(sf)
 library(fasterize)
 library(dplyr)
@@ -7,7 +8,6 @@ library(tidyr)
 library(ggplot2)
 library(RStoolbox)
 library(psych)
-
 
 divEvFun <- function(x){
   as.data.frame(
@@ -56,8 +56,8 @@ makePivotTableRelFreq <- function(x,ID_field,Data_field){
 getVarNames <- function(x) gsub(".tif","",unlist(lapply(strsplit(fpaths,"_"),function(x) x[length(x)])))
 
 
-birdsgrid <- read_sf("D:/MyDocs/Dropbox/MasterThesisJoséSilva/DATA/FieldData/Birds/Grids/Grid200mEffectSampSSU_WGS84UTM29N_VEZ_v1.shp")
-grid1km   <- read_sf("D:/MyDocs/GeoData/ByProject/IND_CHANGE/FieldWorkData/CommonBirds_FieldData_MainTable/Grids/Grid1kmEffectSampPSU_WGS84UTM29N_VEZ_v1.shp")
+birdsgrid <- read_sf("D:/Dropbox/MasterThesisJoséSilva/DATA/FieldData/Birds/Grids/Grid200mEffectSampSSU_WGS84UTM29N_VEZ_v1.shp")
+grid1km   <- read_sf("D:/Dropbox/MasterThesisJoséSilva/DATA/FieldData/Birds/Grids/Grid1kmEffectSampPSU_WGS84UTM29N_VEZ_v1.shp")
 
 fpaths <- list.files("./DATA/RASTER/Landsat/EVI-32day/metrics/jul-jun", pattern=".tif$", full.names = TRUE)[-c(13:14)]
 
@@ -145,7 +145,7 @@ rstDF1km <- rstDF1km %>%
 
 vezDF <- readRDS("./DATAtoShare/RDATA/vezDF_GHC_merge.rds")
 
-vezDF1km <- read.csv("D:/MyDocs/GeoData/ByProject/IND_CHANGE/FieldWorkData/CommonBirds_FieldData_MainTable/birdDiv_multiSARavg_preds_Vez_v2.csv")
+vezDF1km <- read_xlsx("./OUTtoShare/Passerine_diversity_by_group.xlsx")
 
 vezDF_vars <- vezDF %>% 
   left_join(rstDF, by=c("ID_SSU.x"="ID_SSU"))
@@ -162,10 +162,10 @@ cmSpear_1km <- cor(vezDF_vars1km[,-1], method="spearman") %>% round(2)
 
 
 
-write.csv(cmPears, "./OUT/cmPears_LT-vars-jul-jun-v4.csv")
-write.csv(cmSpear, "./OUT/cmSpear_LT-vars-jul-jun-v4.csv")
-write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-jul-jun-v4.csv")
-write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-jul-jun-v4.csv")
+write.csv(cmPears, "./OUT/cmPears_LT-vars-jul-jun-v5z.csv")
+write.csv(cmSpear, "./OUT/cmSpear_LT-vars-jul-jun-v5z.csv")
+write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-jul-jun-v5z.csv")
+write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-jul-jun-v5z.csv")
 
 
 ## ------------------------------------------------------------------------- ##
