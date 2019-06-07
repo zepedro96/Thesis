@@ -89,6 +89,9 @@ birdGridRst <- fasterize::fasterize(birdsgrid, rst[[1]], field = "ID_SSU")
 
 birdGridRst1km <- fasterize::fasterize(grid1km, rst[[1]], field = "ID_PSU")
 
+plot(birdGridRst)
+plot(birdGridRst1km)
+
 ## ------------------------------------------------------------------------------------- ##
 
 rstDF <- na.omit(values(stack(birdGridRst, rst))) %>% 
@@ -102,11 +105,10 @@ rstDF_km20c <- na.omit(values(stack(birdGridRst, map2))) %>%
   rename("ID_SSU" = "layer") %>% 
   group_by(ID_SSU) %>% 
   #summarize_all(.funs=list(shn20c = shannon, nclass20c = countDistinct))
-  do(divEvFun(.[[2]])) %>% 
-  ungroup %>% 
-  select(-1) %>% 
-  cor %>% round(2)
-
+  do(divEvFun(.[[2]]))
+  # ungroup %>% 
+  # select(-1) %>% 
+  # cor %>% round(2)
 
 DFkm20c <- na.omit(values(stack(birdGridRst, map2))) %>% 
   as.data.frame %>% 
@@ -147,6 +149,7 @@ rstDF1km <- rstDF1km %>%
 vezDF <- readRDS("./DATAtoShare/RDATA/vezDF_GHC_merge.rds")
 
 vezDF1km <- read_xlsx("./OUTtoShare/Passerine_diversity_by_group.xlsx")
+vezDF1km <- vezDF1km %>% mutate(ID_PSU = as.numeric(ID_PSU))
 
 vezDF_vars <- vezDF %>% 
   left_join(rstDF, by=c("ID_SSU.x"="ID_SSU"))
@@ -154,13 +157,12 @@ vezDF_vars <- vezDF %>%
 vezDF_vars1km <- vezDF1km %>% 
   left_join(rstDF1km, by=c("ID_PSU"))
 
+
 cmPears <- cor(vezDF_vars[,-c(1:3)]) %>% round(2)
 cmSpear <- cor(vezDF_vars[,-c(1:3)], method="spearman") %>% round(2)
 
 cmPears_1km <- cor(vezDF_vars1km[,-1]) %>% round(2)
 cmSpear_1km <- cor(vezDF_vars1km[,-1], method="spearman") %>% round(2)
-
-
 
 
 write.csv(cmPears, "./OUT/cmPears_LT-vars-jul-jun-v5z.csv")
