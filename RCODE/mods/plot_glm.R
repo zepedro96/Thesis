@@ -15,8 +15,6 @@ tmp <-  gsub("_sum$","",tmp)
 
 glm_res[,"respVar"] <- tmp
 
-glm_res$respVar <- factor(glm_res$respVar, levels = glm_res$respVar[order(-glm_res$Effron)])
-
 # 
 # respVar <- select(glm_res, 1)
 # CoxSnell <- select(glm_res, 3)
@@ -24,15 +22,51 @@ glm_res$respVar <- factor(glm_res$respVar, levels = glm_res$respVar[order(-glm_r
 # Effron <- select(glm_res, 5)
 # varsgvargroups <- select(glm_res, 2)
 
+#-------------------------------------------------
+#CoxSnell
+
+glm_res$respVar <- factor(glm_res$respVar, levels = glm_res$respVar[order(-glm_res$CoxSnell)])
+
+
+p <- ggplot(glm_res, aes(x=respVar, y=CoxSnell)) + 
+  geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
+  facet_wrap (~vargroups, scales = "free_x", ncol = 1) +
+  xlab("Response Variable") +
+  ylab("CoxSnell R2") + 
+  theme(axis.text.x = element_text(angle = 50, hjust = 1))
+  
+p <- plot(p)
+ggsave("./OUTtoShare/CoxSnell.jpg", width = 10, height = 18, units = "cm" ) 
+
+#-------------------------------------------------
+#Nagelkerke
+
+glm_res$respVar <- factor(glm_res$respVar, levels = glm_res$respVar[order(-glm_res$Nagelkerke)])
+
+
+p <- ggplot(glm_res, aes(x=respVar, y=Nagelkerke)) + 
+  geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
+  facet_wrap (~vargroups, scales = "free_x", ncol = 1) +
+  xlab("Response Variable") +
+  ylab("Nagelkerke R2") + 
+  theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+p <- plot(p)
+ggsave("./OUTtoShare/Nagelkerke.jpg", width = 10, height = 18, units = "cm" ) 
+
+#-------------------------------------------------
+#Effron
+
+glm_res$respVar <- factor(glm_res$respVar, levels = glm_res$respVar[order(-glm_res$Effron)])
+
 
 p <- ggplot(glm_res, aes(x=respVar, y=Effron)) + 
   geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
   facet_wrap (~vargroups, scales = "free_x", ncol = 1) +
   xlab("Response Variable") +
   ylab("Effron R2") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
+  theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-
+ggsave("./OUTtoShare/Effron.jpg", width = 10, height = 18, units = "cm" ) 
 
