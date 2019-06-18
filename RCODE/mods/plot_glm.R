@@ -1,11 +1,13 @@
 library(dplyr)
 library(ggplot2)
 
-class_tp <- read.csv("./OUT/class_type_v1.csv")
-glm_dt <- read.csv("./OUT/results_glm_v2.csv")
+class_tp <- read.csv("./OUT/Landsat/class_type_v1.csv")
+glm_dt <- read.csv("./OUT/Landsat/results_glm_v2.csv")
 
 glm_res <- left_join(class_tp, glm_dt, by = "respVar")
 glm_res <- select(glm_res, -3)
+
+glm_res <- glm_res[-c(12:14),]
 
 tmp <- gsub("^Hab_","",glm_res$respVar)
 tmp <- gsub("^Feed_","",tmp)
@@ -36,7 +38,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=CoxSnell)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
   
 p <- plot(p)
-ggsave("./OUTtoShare/CoxSnell.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/CoxSnell-v2.jpg", width = 10, height = 18, units = "cm" ) 
 
 #-------------------------------------------------
 #Nagelkerke
@@ -52,7 +54,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=Nagelkerke)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/Nagelkerke.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/Nagelkerke-v2.jpg", width = 10, height = 18, units = "cm" ) 
 
 #-------------------------------------------------
 #Effron
@@ -68,5 +70,5 @@ p <- ggplot(glm_res, aes(x=respVar, y=Effron)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/Effron.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/Effron-v2.jpg", width = 10, height = 18, units = "cm" ) 
 
