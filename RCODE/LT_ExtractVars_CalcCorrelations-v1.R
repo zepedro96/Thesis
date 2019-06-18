@@ -148,7 +148,7 @@ rstDF1km <- rstDF1km %>%
 
 vezDF <- readRDS("./DATAtoShare/RDATA/vezDF_GHC_merge.rds")
 
-vezDF1km <- read_xlsx("./OUTtoShare/Passerine_diversity_by_group.xlsx")
+vezDF1km <- read_xlsx("./OUTtoShare/Passerine_diversity_by_group.xlsx") ## <---- ## TO CHANGE
 vezDF1km <- vezDF1km %>% mutate(ID_PSU = as.numeric(ID_PSU))
 
 vezDF_vars <- vezDF %>% 
@@ -157,6 +157,11 @@ vezDF_vars <- vezDF %>%
 vezDF_vars1km <- vezDF1km %>% 
   left_join(rstDF1km, by=c("ID_PSU"))
 
+write.csv(vezDF_vars, "./OUT/vezDF_vars_v2.csv")
+write.csv(vezDF_vars1km, "./OUT/vezDF_vars1km_v2.csv")
+
+
+## ------------------------------------------------------------------------------------- ##
 
 cmPears <- cor(vezDF_vars[,-c(1:3)]) %>% round(2)
 cmSpear <- cor(vezDF_vars[,-c(1:3)], method="spearman") %>% round(2)
@@ -165,10 +170,10 @@ cmPears_1km <- cor(vezDF_vars1km[,-1]) %>% round(2)
 cmSpear_1km <- cor(vezDF_vars1km[,-1], method="spearman") %>% round(2)
 
 
-write.csv(cmPears, "./OUT/cmPears_LT-vars-jul-jun-v5z.csv")
-write.csv(cmSpear, "./OUT/cmSpear_LT-vars-jul-jun-v5z.csv")
-write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-jul-jun-v5z.csv")
-write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-jul-jun-v5z.csv")
+write.csv(cmPears, "./OUT/cmPears_LT-vars-jul-jun-v8.csv")
+write.csv(cmSpear, "./OUT/cmSpear_LT-vars-jul-jun-v8.csv")
+write.csv(cmPears_1km, "./OUT/cmPears_1km_LT-vars-jul-jun-v8.csv")
+write.csv(cmSpear_1km, "./OUT/cmSpear_1km_LT-vars-jul-jun-v8.csv")
 
 
 ## ------------------------------------------------------------------------- ##
