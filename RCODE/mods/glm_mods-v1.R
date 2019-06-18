@@ -14,8 +14,8 @@ respVars <- colnames(vezDF_vars1km)[c(3, 7:13, 15:32)] # Select response variabl
 
 outMods <- list()
 
-results <- as.data.frame(matrix(NA,ncol=7, nrow = length(respVars)))
-colnames(results) <- c("respVar","CoxSnell","Nagelkerke","Effron","OdT.LRT","OdT.DeanB","OdT.DeanB2")
+results <- as.data.frame(matrix(NA,ncol=4, nrow = length(respVars)))
+colnames(results) <- c("respVar","CoxSnell","Nagelkerke","Effron")
 
 
 vifRes <- as.data.frame(matrix(NA,ncol=length(varsToUse), nrow = length(respVars)))
@@ -41,24 +41,11 @@ for(i in 1:length(respVars)){
   
   vifRes[i,] <- sqrt(vif(mod))
   #print(mod)
-  #summary(mod)
-  
-  mod.nb <- try(glm.nb(compForm, data = vezDF_vars1km))
-  if(!inherits(mod.nb,"try-error")){
-    test0 <- test.nb.pois(mod.nb, mod)
-    test0 <- test0$p.value
-  }else{
-    test0 <- NA
-  }
-  
-  test1 <- DCluster::DeanB(mod)
-  test2 <- DCluster::DeanB2(mod)
   
   outMods[[i]] <- mod
   
   results[i,1] <- respVar
   results[i, 2:4] <- PseudoR2(mod,"all")[c(3,4,7)]
-  results[i, 5:7] <- c(test0, test1$p.value, test2$p.value)
   
   cat("Finished model:",i,"\n\n")
   
