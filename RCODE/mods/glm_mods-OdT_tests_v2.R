@@ -2,7 +2,9 @@
 
 library(DescTools)
 library(car)
+library(MASS)
 library(glmnet)
+library(DCluster)
 
 vezDF_vars1km <- read.csv("./OUT/vezDF_vars1km_v2.csv")
 
@@ -93,8 +95,8 @@ for(i in 1:length(respVars)){
     test0 <- NA
   }
   
-  test1 <- DCluster::DeanB(mod)
-  test2 <- DCluster::DeanB2(mod)
+  test1 <- DeanB(mod)
+  test2 <- DeanB2(mod)
   
   outMods[[i]] <- mod
   
@@ -116,8 +118,8 @@ print(sort(apply(lassoCoeffs,2,FUN = function(x) sum(x!=0)), decreasing = TRUE))
 
 
 
-write.csv(modSummary, "./OUTtoShare/modelsSummaries_v3.csv")
-write.csv(lassoCoeffs, "./OUTtoShare/modelSelectionCoeffsLasso_v3.csv")
+write.csv(modSummary, "./OUT/modelsSummaries_v3.csv")
+write.csv(lassoCoeffs, "./OUT/modelSelectionCoeffsLasso_v3.csv")
 
 write.csv(vifRes, "./OUT/vifRes_v3.csv")
 write.csv(results, "./OUT/results_glm_v3.csv", row.names = FALSE)
