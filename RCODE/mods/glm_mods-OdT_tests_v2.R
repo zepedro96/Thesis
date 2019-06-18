@@ -6,7 +6,7 @@ library(MASS)
 library(glmnet)
 library(DCluster)
 
-vezDF_vars1km <- read.csv("./OUT/vezDF_vars1km_v2.csv")
+vezDF_vars1km <- read.csv("./OUT/Landsat/vezDF_vars1km_v2.csv")
 
 varsToUse <- c("EFAmin_std" ,"EFAmax_std" ,"EFAavg_std","EFAsemax_std",
                "EFAstd_std","EFAamp_std",
@@ -18,7 +18,7 @@ varsToUse <- c("EFAmin_std" ,"EFAmax_std" ,"EFAavg_std","EFAsemax_std",
 
 #varsToUse <- colnames(vezDF_vars1km)[32:66]
 
-respVars <- colnames(vezDF_vars1km)[c(3, 7:13, 15:31)] # Select response variables
+respVars <- colnames(vezDF_vars1km)[c(3, 7:13, 15:32)] # Select response variables
 #respVar <- "Sp_rich_sum"
 
 outMods <- list()
@@ -118,10 +118,10 @@ print(sort(apply(lassoCoeffs,2,FUN = function(x) sum(x!=0)), decreasing = TRUE))
 
 
 
-write.csv(modSummary, "./OUT/modelsSummaries_v3.csv")
-write.csv(lassoCoeffs, "./OUT/modelSelectionCoeffsLasso_v3.csv")
+write.csv(modSummary, "./OUT/modelsSummaries_v4z.csv")
+write.csv(lassoCoeffs, "./OUT/modelSelectionCoeffsLasso_v4z.csv")
 
-write.csv(vifRes, "./OUT/vifRes_v3.csv")
-write.csv(results, "./OUT/results_glm_v3.csv", row.names = FALSE)
+write.csv(vifRes, "./OUT/vifRes_v4z.csv")
+write.csv(results, "./OUT/results_glm_v4z.csv", row.names = FALSE)
 
 
