@@ -2,46 +2,88 @@
 
 library(DescTools)
 library(car)
+library(glmnet)
 
 vezDF_vars1km <- read.csv("./OUT/vezDF_vars1km_v2.csv")
 
-varsToUse <- c("EFAavg_std","EFAsemax_std","evar","eft_count")
+varsToUse <- c("EFAmin_std" ,"EFAmax_std" ,"EFAavg_std","EFAsemax_std",
+               "EFAstd_std","EFAamp_std",
+               
+               "EFAmin_avg" ,"EFAmax_avg" ,"EFAavg_avg","EFAsemax_avg",
+               "EFAstd_avg","EFAamp_avg",
+               
+               "evar","shannon","eft_count")
 
-#combns<- combn(1:4,2)
+#varsToUse <- colnames(vezDF_vars1km)[32:66]
 
-respVars <- colnames(vezDF_vars1km)[c(3, 7:13, 15:32)] # Select response variables
+respVars <- colnames(vezDF_vars1km)[c(3, 7:13, 15:31)] # Select response variables
 #respVar <- "Sp_rich_sum"
 
 outMods <- list()
 
 results <- as.data.frame(matrix(NA,ncol=7, nrow = length(respVars)))
-colnames(results) <- c("respVar","CoxSnell","Nagelkerke","Effron","OdT.LRT","OdT.DeanB","OdT.DeanB2")
+colnames(results) <- c("respVar","CoxSnell","Nagelkerke","Effron",
+                       "OdT.LRT","OdT.DeanB","OdT.DeanB2")
 
 
-vifRes <- as.data.frame(matrix(NA,ncol=length(varsToUse), nrow = length(respVars)))
+
+vifRes <- as.data.frame(matrix(NA,ncol=length(varsToUse), 
+                               nrow = length(respVars)))
 colnames(vifRes) <- varsToUse
+rownames(vifRes) <- respVars
+
 
 
 for(i in 1:length(respVars)){
   
-  # v1<-combns[1,i]
-  # v2<-combns[2,i]
-  # var1<- varsToUse[v1]
-  # var2<- varsToUse[v2]
-  
   respVar <- respVars[i]
-  #form <- paste(respVar,paste(var1,var2,sep="+"),sep="~")
-  form <- paste(respVar,paste(varsToUse,collapse="+"),sep="~")
+  # form <- paste(respVar,paste(varsToUse,collapse="+"),sep="~")
+  # compForm <- as.formula(form)
   
+  glmLassoReg <- glmnet(x=as.matrix(vezDF_vars1km[,varsToUse]),
+                        y=vezDF_vars1km[,respVar], 
+                        family = "poisson", dfmax=3)
+  
+  tmpLasso <- apply(as.matrix(glmLassoReg$beta),1,max)
+  if(i==1){
+    lassoCoeffs <- tmpLasso
+  }else{
+    lassoCoeffs <- rbind(lassoCoeffs,tmpLasso)
+  }
+  
+  nonNullCoeffs <- (tmpLasso[tmpLasso > 0])
+  
+  if(length(nonNullCoeffs)!=0){
+    if(length(nonNullCoeffs)<3){
+      lassoVars <- names(nonNullCoeffs[1:length(nonNullCoeffs)])
+    }else{
+      lassoVars <- names(nonNullCoeffs[1:3])
+    }
+  }else{
+    next
+  }
+  
+  form <- paste(respVar,paste(lassoVars, collapse="+"),sep="~")
   compForm <- as.formula(form)
   
-  summary(form)
-  
   mod <- glm(formula = compForm, data = vezDF_vars1km, family = poisson())
+  #mod.step <- stepAIC(mod, direction = "both")
+
+  if(length(lassoVars)>2){
+    vifRes[i, lassoVars] <- vif(mod)
+  }else{
+    vifRes[i, lassoVars] <- NA
+  }
   
-  vifRes[i,] <- sqrt(vif(mod))
-  #print(mod)
-  #summary(mod)
+  
+  coeffs <- summary(mod)$coefficients
+  tmp <- data.frame(respVar=respVar, coeffs, sig=as.integer(coeffs[,4] < 0.05))
+  
+  if(i==1){
+    modSummary<-tmp
+  }else{
+    modSummary<-rbind(modSummary,tmp)
+  }
   
   mod.nb <- try(glm.nb(compForm, data = vezDF_vars1km))
   if(!inherits(mod.nb,"try-error")){
@@ -64,5 +106,20 @@ for(i in 1:length(respVars)){
   
 }
 
-write.csv(vifRes, "./OUT/vifRes_v1.csv")
-write.csv(results, "./OUT/results_glm_v2.csv")
+colnames(lassoCoeffs) <- varsToUse
+rownames(lassoCoeffs) <- respVars
+lassoCoeffs <- round(lassoCoeffs,3)
+lassoCoeffs <- rbind(lassoCoeffs,Count=apply(lassoCoeffs,2,FUN = function(x) sum(x!=0)))
+
+print(sort(apply(lassoCoeffs,2,FUN = function(x) sum(x!=0)), decreasing = TRUE))
+
+
+
+
+write.csv(modSummary, "./OUTtoShare/modelsSummaries_v3.csv")
+write.csv(lassoCoeffs, "./OUTtoShare/modelSelectionCoeffsLasso_v3.csv")
+
+write.csv(vifRes, "./OUT/vifRes_v3.csv")
+write.csv(results, "./OUT/results_glm_v3.csv", row.names = FALSE)
+
+
