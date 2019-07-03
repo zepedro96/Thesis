@@ -42,9 +42,17 @@ ymax <- max(coords[,2])
 nr <- 0
 SARobjs <- list()
 
+n_find <- 20
+n_max <- 2000
+
+it <- 0
+
+mods <- c("power","expo","negexpo","monod","logist",
+          "ratio","lomolino","weibull")
+
 repeat{
   
-  
+  it <- it + 1
   xs <- runif(1, xmin, xmax)
   ys <- runif(1, ymin, ymax)
   
@@ -65,6 +73,8 @@ repeat{
     selID_st2 <- sample(rids[selIDs_st1[,1]],1)
     selPoint_st2 <- pts[selID_st2,]
     
+    # Check if the selected coordinates overlap their buffer areas
+    #
     if(exists("centralCoords")){
       
       centralPoints_sf <- st_as_sfc(SpatialPoints(centralCoords))
@@ -72,7 +82,7 @@ repeat{
       
       dists <- st_distance(selPoint_st2, centralPoints_sf)[1,]
       
-      if(min(dists) < maxDist){
+      if(min(dists) < 2 * maxDist){
         cat("Skipping to next iteration - minimum distance condition not verified!!\n\n")
         next
       }
@@ -108,7 +118,7 @@ repeat{
     
     if(cofv >= 20 & min(nspMat[,3]) < 30){
       
-      mods <- c("power","expo","negexpo","monod","logist","ratio","lomolino","weibull")
+      
       sarData <- list(name = paste("PLOT",nr,sep="_"), data = data.frame(a = nspMat[,2], s = nspMat[,3]))
       
       mtSAR <- try(multiSAR(mods, sarData, nBoot=99, crit="Info", norTest="lillie", verb=FALSE))
@@ -116,9 +126,7 @@ repeat{
       if(!inherits(mtSAR,"try-error")){
         
         nr <- nr+1
-        # mtSAR$calculated
-        # mtSAR$filtCalculated
-        # mtSAR$averaged
+
         plot(nspMat[,2],nspMat[,3])
         lines(nspMat[,2],mtSAR$averaged)
         
@@ -136,13 +144,16 @@ repeat{
           spRichSAR <- rbind(spRichSAR, tmpSpRichSAR)
         }
         
-        cat("\n\n->Finished round [",nr,"] ......\n\n")
+        cat("\n\n-> Found point nr [",nr,"]\n\n")
         
       }
     }
   }
   
-  if(nr==20)
+  cat("\n\n### Finished round nr:",it,"[n_found =",nr,"]... ###\n\n")
+  
+  # Check stopping conditions
+  if(nr==n_find | it == n_max)
     break
 }
 
