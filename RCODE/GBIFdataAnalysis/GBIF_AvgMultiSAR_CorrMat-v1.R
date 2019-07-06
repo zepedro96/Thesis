@@ -7,7 +7,9 @@ library(raster)
 library(dplyr)
 library(fasterize)
 
-pts <- read_sf("C:/Users/JG/Desktop/GBIF_DATA/GBIF_Passeriformes_NW_PTES_29N_v1.shp")
+load("./DATA/SAR_analysis-v1.RData")
+
+pts <- read_sf("D:/MyDocs/R-dev/Thesis/DATA/GBIF_DATA/GBIF_Passeriformes_NW_PTES_29N_v1.shp")
 vezBasin <- read_sf("D:/MyDocs/R-dev/Thesis/DATA/VECTOR/Bounds/VezBasinCOS12_buff_WGS84_29N.shp")
 
 EFA_MED <- raster("D:/MyDocs/R-dev/PA_EcosystemStability/DATA/RASTER/MODIS/PT/IND/MultiAnnual/MOD13Q1.EVI.MED.2001_2016_med.tif")
