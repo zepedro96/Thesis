@@ -4,19 +4,20 @@ library(raster)
 library(fasterize)
 library(dplyr)
 library(trend)
+library(sf)
 
 
 senSlope <- function(x,...) sens.slope(x,...)$estimates
 senSlopePval <- function(x,...) sens.slope(x,...)$p.value
 
-grid1km   <- read_sf("D:/MyDocs/Dropbox/MasterThesisJoséSilva/DATA/Grids/SampGridVez_1km_Vez_All_v1.shp")
+grid1km   <- read_sf("D:/Dropbox/MasterThesisJoséSilva/DATA/Grids/SampGridVez_1km_Vez_All_v1.shp")
 
 ## Continuous EFA indicators
 ## EFA_max / EFA_semax
 
-EFA_rst <- stack("./DATA/RASTER/Landsat/EVI-32day/metrics/jul-jun/LT578comp_EVI_1984_2019_jul-jun_EFAmax.tif")
+EFA_rst <- stack("./DATA/RASTER/Landsat/EVI-32day/metrics/jul-jun/LT578comp_EVI_1984_2019_jul-jun_EFAavg.tif")
 
-EFA_name <- "mx" ## USE TWO LETTERS ONLY (shapefiles will not work with more characters... :-0
+EFA_name <- "av" ## USE TWO LETTERS ONLY (shapefiles will not work with more characters... :-0
 
 names(EFA_rst) <- paste(EFA_name,substr(as.character(1984:2019),3,4),sep="_")
 
@@ -60,9 +61,9 @@ grid1km <- grid1km %>%
   left_join(trendsDF, by = "ID_PSU")
 
 
-write_sf(grid1km,"./OUTtoSHARE/EFA_trends/EFA_max_grid1km_1984_2019_v1.shp")
+write_sf(grid1km,"./OUTtoSHARE/EFA_trends/EFA_avg_grid1km_1984_2019_v1.shp")
 
-write_sf(grid1km %>% st_centroid,"./OUTtoSHARE/EFA_trends/EFA_max_grid1kmCentroids_1984_2019_v1.shp")
+write_sf(grid1km %>% st_centroid,"./OUTtoSHARE/EFA_trends/EFA_avg_grid1kmCentroids_1984_2019_v1.shp")
 
 
 
