@@ -4,7 +4,45 @@ library(raster)
 library(fasterize)
 library(dplyr)
 library(trend)
+library(readxl)
 library(sf)
+library(tidyr)
+library(ggplot2)
+library(RStoolbox)
+library(psych)
+library(microbiome)
+
+
+divEvFun <- function(x){
+  as.data.frame(
+    c(evenness(as.numeric(table(x)), index = "all", zeroes = FALSE, detection = 0)[1,,drop=TRUE],
+      diversity(as.numeric(table(x)), index = c("shannon","inverse_simpson","gini_simpson"), zeroes = FALSE)[1,,drop=TRUE],
+      eft_count = length(unique(x)))
+  )
+}
+
+shannon <- function (x, na.rm=TRUE){
+  x <- na.omit(x)
+  if(length(x)==0){
+    return(0)
+  }else{
+    tb <- table(x)
+    tbrel <- tb / sum(tb)
+    z <- tbrel * log(tbrel)
+    out <- -1 * sum(z)
+    return(out)
+  }
+}
+
+countDistinct <- function(x){
+  x <- na.omit(x)
+  if(length(x)==0){
+    return(0)
+  }else{
+    return(length(unique(x))) 
+  }
+} 
+
 
 
 senSlope <- function(x,...) sens.slope(x,...)$estimates
@@ -66,5 +104,5 @@ write_sf(grid1km,"./OUTtoSHARE/EFA_trends/EFA_avg_grid1km_1984_2019_v1.shp")
 write_sf(grid1km %>% st_centroid,"./OUTtoSHARE/EFA_trends/EFA_avg_grid1kmCentroids_1984_2019_v1.shp")
 
 
-
+## Calculate Shannon
 
