@@ -1,20 +1,28 @@
+
+
 library(dplyr)
 library(ggplot2)
 
-class_tp <- read.csv("./OUTtoShare/class_type_v1.csv")
-glm_dt <- read.csv("./OUT/results_glm_v4z.csv")
+# Changed the groups of variables because of modifications in names
+class_tp <- read.csv("./OUTtoShare/class_type_v2.csv")
 
+# Load results
+glm_dt <- read.csv("./OUT/results_glm_elasticnet_v5.csv")
+
+# Join tables
 glm_res <- left_join(class_tp, glm_dt, by = "respVar")
 #glm_res <- select(glm_res, -3)
 
-glm_res <- glm_res[-c(12:14),]
+# Remove variables related to feeding/omnivorous group
+# Kept the one with best results
+glm_res <- glm_res[-c(13:14),]
 
+# Remove name prefixes
 tmp <- gsub("^Hab_","",glm_res$respVar)
 tmp <- gsub("^Feed_","",tmp)
 tmp <-  gsub("^Nest_","",tmp)
 tmp <-  gsub("^Size_","",tmp)
 tmp <-  gsub("_sum$","",tmp)
-
 glm_res[,"respVar"] <- tmp
 
 # 
@@ -38,7 +46,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=CoxSnell)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
   
 p <- plot(p)
-ggsave("./OUTtoShare/CoxSnell-v3.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/CoxSnell-v4.jpg", width = 10, height = 18, units = "cm" ) 
 
 #-------------------------------------------------
 #Nagelkerke
@@ -54,7 +62,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=Nagelkerke)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/Nagelkerke-v3.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/Nagelkerke-v4.jpg", width = 10, height = 18, units = "cm" ) 
 
 #-------------------------------------------------
 #Effron
@@ -70,7 +78,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=Effron)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/Effron-v3.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/Effron-v4.jpg", width = 10, height = 18, units = "cm" ) 
 
 #-------------------------------------------------
 #OdT.LRT
@@ -86,7 +94,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=OdT.LRT)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/OdT.LRT-v3.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/OdT.LRT-v4.jpg", width = 10, height = 18, units = "cm" ) 
 
 
 #-------------------------------------------------
@@ -103,7 +111,7 @@ p <- ggplot(glm_res, aes(x=respVar, y=OdT.DeanB)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/OdT.DeanB-v3.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/OdT.DeanB-v4.jpg", width = 10, height = 18, units = "cm" ) 
 
 
 #-------------------------------------------------
@@ -120,4 +128,49 @@ p <- ggplot(glm_res, aes(x=respVar, y=OdT.DeanB2)) +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
-ggsave("./OUTtoShare/OdT.DeanB2-v3.jpg", width = 10, height = 18, units = "cm" ) 
+ggsave("./OUTtoShare/OdT.DeanB2-v4.jpg", width = 10, height = 18, units = "cm" )
+
+
+#-------------------------------------------------
+# Variable selection frequency
+modSelFreq <- read.csv("./OUT/varSelectionFrequency_elasticnet_v5.csv")
+
+modSelFreq$varName <- factor(modSelFreq$varName, 
+                             levels = modSelFreq$varName[order(modSelFreq$freq, decreasing = TRUE)])
+
+p <- ggplot(modSelFreq, aes(x=varName, y=relfreq)) + 
+  geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
+  xlab("Predictive Variable") +
+  ylab("Relative frequency of selection\nin elasticnet models (%)") + 
+  theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+plot(p)
+ggsave("./OUTtoShare/varSelectionFreq-ElasticNet-v4.jpg", plot = p, width = 14, height = 10, units = "cm" )
+
+
+#-------------------------------------------------
+# Average coeffs
+lassoCoeffs <- read.csv("./OUT/ModelSelection_CoeffsElasticnet_v5.csv")
+
+medCoeff <- data.frame(varName = colnames(lassoCoeffs)[-1], 
+                       med=apply(lassoCoeffs[,-1], 2, median))
+
+
+medCoeff$varName <- factor(medCoeff$varName, 
+                             levels = medCoeff$varName[order(medCoeff$med, decreasing = TRUE)])
+
+write.csv(medCoeff, "./OUT/MedianElasticnetCoeffs_v5.csv", row.names = FALSE)
+
+
+p <- ggplot(medCoeff, aes(x=varName, y=med)) + 
+  geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
+  xlab("Predictive Variable") +
+  ylab("Median coefficient value (elasticnet)") + 
+  theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+plot(p)
+ggsave("./OUTtoShare/MedianCoeffValue-ElasticNet-v4.jpg", plot = p, width = 14, height = 10, units = "cm" )
+
+
+
+
