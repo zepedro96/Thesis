@@ -1,0 +1,16 @@
+"varName","freq","relfreq"
+"EFAmax_std",24,96
+"EFAavg_std",24,96
+"EFAamp_std",22,88
+"shannon",20,80
+"eft_count",18,72
+"EFAmin_avg",18,72
+"EFAmax_avg",16,64
+"EFAamp_avg",15,60
+"EFAavg_avg",14,56
+"EFAstd_avg",14,56
+"EFAsemax_std",12,48
+"evar",8,32
+"EFAmin_std",6,24
+"EFAstd_std",6,24
+"EFAsemax_avg",3,12
