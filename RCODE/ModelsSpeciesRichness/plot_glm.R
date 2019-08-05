@@ -178,25 +178,62 @@ cvResFinalAvg <- cvResFinal %>% group_by(V1) %>% summarize(avgR2=mean(V3),avgSpC
 
 #cvResFinalAvg[,"V1"] <- factor(cvResFinalAvg$V1, levels = cvResFinalAvg$V1[order(-cvResFinalAvg$avgR2)])
 
-cvResFinalAvg <- left_join(cvResFinalAvg,class_tp, by = c("V1"="respVar"))
+cvResFinalAvg <- left_join(class_tp, cvResFinalAvg, by = c("respVar" = "V1"))
+cvResFinalAvg <- cvResFinalAvg[-c(13:14), ]
 
 # Remove name prefixes
-tmp <- gsub("^Hab_","",cvResFinalAvg$V1)
+tmp <- gsub("^Hab_","",cvResFinalAvg$respVar)
 tmp <- gsub("^Feed_","",tmp)
 tmp <-  gsub("^Nest_","",tmp)
 tmp <-  gsub("^Size_","",tmp)
 tmp <-  gsub("_sum$","",tmp)
-cvResFinalAvg[,"V1"] <- tmp
+cvResFinalAvg[,"respVar"] <- tmp
 
 
-p <- ggplot(cvResFinalAvg, aes(x=V1, y=avgR2)) + 
+cvResFinalAvg[,"respVar"] <- factor(cvResFinalAvg$respVar, 
+                                levels = cvResFinalAvg$respVar[order(-cvResFinalAvg$avgR2)])
+
+
+p <- ggplot(cvResFinalAvg, aes(x=respVar, y=avgR2)) + 
   geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
   facet_wrap (~vargroups, scales = "free_x", ncol = 1) +
   xlab("Response Variable") +
-  ylab("OdT.DeanB") + 
+  ylab("Average R2 (5-fold cross-validation)") + 
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
 p <- plot(p)
 ggsave("./OUTtoShare/cvAvgR2-v4.jpg", width = 10, height = 18, units = "cm" )
 
+
+
+
+cvResFinalAvg <- cvResFinal %>% group_by(V1) %>% summarize(avgR2=mean(V3),avgSpCor=mean(V4))
+
+#cvResFinalAvg[,"V1"] <- factor(cvResFinalAvg$V1, levels = cvResFinalAvg$V1[order(-cvResFinalAvg$avgR2)])
+
+cvResFinalAvg <- left_join(class_tp, cvResFinalAvg, by = c("respVar" = "V1"))
+cvResFinalAvg <- cvResFinalAvg[-c(13:14), ]
+
+# Remove name prefixes
+tmp <- gsub("^Hab_","",cvResFinalAvg$respVar)
+tmp <- gsub("^Feed_","",tmp)
+tmp <-  gsub("^Nest_","",tmp)
+tmp <-  gsub("^Size_","",tmp)
+tmp <-  gsub("_sum$","",tmp)
+cvResFinalAvg[,"respVar"] <- tmp
+
+
+cvResFinalAvg[,"respVar"] <- factor(cvResFinalAvg$respVar, 
+                                    levels = cvResFinalAvg$respVar[order(-cvResFinalAvg$avgSpCor)])
+
+
+p <- ggplot(cvResFinalAvg, aes(x=respVar, y=avgSpCor)) + 
+  geom_bar(stat = "identity", fill="#7fbf7f", color="black") + 
+  facet_wrap (~vargroups, scales = "free_x", ncol = 1) +
+  xlab("Response Variable") +
+  ylab("Average Spearman corr. (5-fold cross-validation)") + 
+  theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+p <- plot(p)
+ggsave("./OUTtoShare/cvAvgSpCor-v4.jpg", width = 10, height = 18, units = "cm" )
 
