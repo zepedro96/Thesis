@@ -108,6 +108,9 @@ tsSmooth.HWwt.LT7 <- function(x, na.rm=TRUE){
 }
 
 
+## ------------------------------------------------------------------------------------------ ##
+## ------------------------------------------------------------------------------------------ ##
+
 
 LTdates <- readxl::read_excel("./DATA/RASTER/Landsat/EVI-32day/EVI-32-day_ImageList-v1.xlsx")
 LT7_dates <- LTdates %>% filter(Satellite=="LE07", Year >= 2013)
@@ -148,7 +151,6 @@ for(i in 1:N){
 }
 
 
-## ---------------------------------------------------------------------------------- ##
 ## ---------------------------------------------------------------------------------- ##
 ## ---------------------------------------------------------------------------------- ##
 
@@ -224,32 +226,49 @@ plot(g)
 
 ## ---------------------------------------------------------------------------------- ##
 ## ---------------------------------------------------------------------------------- ##
-## ---------------------------------------------------------------------------------- ##
+
+
+## Read base data
+##
+LTdates <- readxl::read_excel("./DATA/RASTER/Landsat/EVI-32day/EVI-32-day_ImageList-v1.xlsx")
+LT7_dates <- LTdates %>% filter(Satellite=="LE07", Year >= 2013)
+
+LT7 <- brick("./DATA/RASTER/Landsat/EVI-32day/LT7_EVI_Vez_Basin_1999-2019.tif" ,values=TRUE)
+LT7 <- LT7[[LT7_dates$ids]]
+names(LT7) <- paste("EVIts_", LT7_dates$DateCode, sep="")
+
+
+tsDates <- read.csv("./DATA/RASTER/Landsat/EVI-32day/FullImageList_1984-2019-LT-5-7-8_v2.csv")
+
+fl <- list.files("./DATA/RASTER/Landsat/EVI-32day/full",pattern=".tif$", full.names = TRUE)
+EVIts <- stack(fl)
+names(EVIts) <- paste("EVIts_",tsDates$DateCode,sep="")
 
 
 
-testPoints <- read_sf("./DATAtoShare/class.shp") %>% select(Name) %>% st_zm %>% 
+testPoints <- read_sf("./DATAtoShare/testPoints.shp") %>% select(Name, Name_EN) %>% st_zm %>% 
   st_transform(crs=c("+proj=utm +zone=29 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
-ard <- read_sf("./DATAtoShare/area ardida.shp") %>% select(Name) %>% st_zm %>%
-  st_transform(crs=c("+proj=utm +zone=29 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
 
-pts <- (rbind(testPoints,ard))
-pts_DF <- `st_geometry<-`(pts, NULL)
+# ard <- read_sf("./DATAtoShare/area ardida.shp") %>% select(Name) %>% st_zm %>%
+#   st_transform(crs=c("+proj=utm +zone=29 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+
+#pts <- (rbind(testPoints,ard))
+pts_DF <- `st_geometry<-`(testPoints, NULL)
 
 
 
-for(i in 1:nrow(pts)){
+for(i in 26:nrow(pts)){
   
   
-  ptType <- pts_DF[i,"Name",drop=TRUE]
+  ptType <- pts_DF[i,"Name_EN",drop=TRUE]
   
   pt1Data     <- raster::extract(EVIts, pts[i,]) %>% as.numeric
   pt1Data_LT7 <- raster::extract(LT7, pts[i,]) %>% as.numeric
   
   ptdataTs             <- ts(data = pt1Data, start = c(1984,3), end=c(2019,4), frequency = 12)
   ptdataTs_LT7         <- ts(data = pt1Data_LT7, start = c(2013,1), end=c(2019,4), frequency = 12)
-  pt1DataImpute_ma     <- imputeTS::na.seadec(ptdataTs, algorithm = "ma", k = 4)
-  pt1DataImpute_ma_LT7 <- imputeTS::na.seadec(ptdataTs_LT7, algorithm = "ma", k = 4)
+  pt1DataImpute_ma     <- imputeTS::na_seadec(ptdataTs, algorithm = "ma", k = 4)
+  pt1DataImpute_ma_LT7 <- imputeTS::na_seadec(ptdataTs_LT7, algorithm = "ma", k = 4)
   
   
   smWhit     <- tsSmooth.HWwt(pt1Data)
@@ -272,21 +291,28 @@ for(i in 1:nrow(pts)){
   
   g <- ggplot(LT_DF)+
     geom_line(aes(x = dates, y = EVI_),linetype="dashed", size=0.5, color="black") +
-    geom_point(aes(x = dates, y = EVI_, shape = sat, color=sat), size=2) +
+    geom_point(aes(x = dates, y = EVI_, shape = sat, color=sat), size=2.5) +
     geom_line(aes(x = dates, y = EVI_sm, color="Composite series LT 5,7,8\n(Whittaker smooth)"), size=1.25) + 
-    geom_line(data=LT7_DF, mapping=aes(x = dates, y = EVI_sm, color="LE07"), size=1.25) +
+    #geom_line(data=LT7_DF, mapping=aes(x = dates, y = EVI_sm, color="LE07"), size=1.25) +
     scale_color_brewer(palette = "Set1", name="Data source:") +
     scale_shape(name="") +
-    theme_bw() + 
-    theme(legend.position="bottom") + 
     ylab("EVI (Enhanced Vegetation Index)") + 
     xlab("Time/Year") + 
+    theme_bw() + 
+    theme(legend.position="bottom") + 
+    theme(axis.text=element_text(size=16),
+          axis.title=element_text(size=18),
+          plot.title = element_text(size=22),
+          plot.subtitle = element_text(size=20),
+          legend.text = element_text(size=18),
+          legend.title = element_text(size=20)) +
     labs(title = "EVI 32-day composite time series for Landsat 5,7,8 (1984 - 2019)",
-         subtitle = paste("LULC type:",ptType,"| Index nr.:",i))
+         subtitle = paste("LULC type: ",ptType," [",i,"]",sep=""))
   
-  #plot(g)
+  plot(g)
   
-  ggplot2::ggsave(plot=g, filename=paste("./OUTtoShare/tsPlots/LT_ts/EVI_32day_LTcompositeTS_[",i,"]_",ptType,".png",sep=""),
+  ggplot2::ggsave(plot=g, filename=paste("./OUTtoShare/tsPlots_v2/EVI_32day_LTcompositeTS_[",i,"]_",
+                                         gsub("\\/","_",ptType),".png",sep=""),
                   width = 14, height = 8)
   
   cat("\n---> Finished point",i,"out of",nrow(pts),"\n\n")
